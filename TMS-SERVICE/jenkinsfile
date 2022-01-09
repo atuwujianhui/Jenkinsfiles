@@ -1,0 +1,67 @@
+pipeline {
+    agent any
+    
+    options {
+        timeout(time: 1, unit: "HOURS")
+    }
+    
+    environment {
+        package_name = "tms-0.0.1-SNAPSHOT.jar"
+    }
+
+    stages {
+        // 清空工作区
+        stage('Clean Workspace') {
+            steps {
+                deleteDir()
+                echo 'Clean Seccuessfully!'
+            }
+        }
+        // 签出项目
+        stage('Clone Project') {
+            steps {
+                git credentialsId: 'fe569196-bb65-4f18-b7e8-c26587efff64', url: 'git@github.com:atuwujianhui/TMS-SERVICE.git'
+                echo 'Clone Seccuessfully!'
+            }
+        }
+        // 构建
+        stage('Build Project') {
+            steps {
+                bat 'mvn clean package'
+                // bat "rename target\\tms-0.0.1-SNAPSHOT.jar ${target_package_name}"
+                echo 'Build Seccuessfully!'
+            }
+        }
+        // 部署
+        stage('Deploy Project') {
+            steps {
+                // 注意：Shell命令会在“Remote directory”目录下执行
+                // sshPublisher(publishers: [sshPublisherDesc(configName: '192.168.31.169', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '''
+                //     # pid=$(ps -ef | grep ${package_name} | grep -v grep | awk \'{print $2}\')
+                //     # [ ${pid} ] && kill -9 ${pid}
+                //     # cd jar
+                //     nohup java -jar jar/tms.jar --server.port=8081 > nohup.log &
+                // ''', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: 'jar', remoteDirectorySDF: false, removePrefix: 'target/', sourceFiles: 'target/tms-0.0.1-SNAPSHOT.jar')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+                sshPublisher(publishers: [sshPublisherDesc(configName: '192.168.31.169', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '''
+                    # 定义变量
+                    package_name="tms-0.0.1-SNAPSHOT.jar"
+                    port="8081"
+                    
+                    # 关闭服务（目前是先上传覆盖安装包，再关闭服务，尽量先关闭服务，再上传）
+                    pid=$(ps -ef | grep ${package_name} | grep -v grep | awk \'{print $2}\')
+                    [ ${pid} ] && kill -9 ${pid}
+                    
+                    # 初始化环境变量
+                    source /etc/profile
+                    cd ${remoteDirectory}
+                    
+                    echo ${remoteDirectory} > val.txt
+                    
+                    # 启动服务
+                    nohup java -jar ${package_name} --server.port=${port} > nohup.out &
+                ''', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: 'jar', remoteDirectorySDF: false, removePrefix: 'target/', sourceFiles: 'target/tms-0.0.1-SNAPSHOT.jar')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
+                echo 'Deploy Seccuessfully!'
+            }
+        }
+    }
+}
