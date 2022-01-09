@@ -1,7 +1,7 @@
 
-// å¼•å…¥å¼•å…¥å…±äº«åº“
+// ÒıÈëÒıÈë¹²Ïí¿â
 @Library('Jenkinslibs') _ 
-def tools = new org.devops.tools()  // å®šä¹‰ç±»å¯¹è±¡ï¼ˆæç¤ºæ— æ³•è§£æç±» ï¼Œå®é™…å¯ä»¥æ­£å¸¸è¿è¡Œï¼‰
+def tools = new org.devops.tools()  // ¶¨ÒåÀà¶ÔÏó£¨ÌáÊ¾ÎŞ·¨½âÎöÀà £¬Êµ¼Ê¿ÉÒÔÕı³£ÔËĞĞ£©
 
 pipeline {
     agent any
@@ -12,8 +12,8 @@ pipeline {
     // }
     
     options {
-        timestamps() // æ—¥å¿—æ˜¾ç¤ºæ—¶é—´æˆ³ 
-        timeout(time: 1, unit: "HOURS") // æµæ°´çº¿è¶…æ—¶è®¾ç½®
+        timestamps() // ÈÕÖ¾ÏÔÊ¾Ê±¼ä´Á 
+        timeout(time: 1, unit: "HOURS") // Á÷Ë®Ïß³¬Ê±ÉèÖÃ
     }
     
     environment {
@@ -21,21 +21,21 @@ pipeline {
     }
 
     stages {
-        // æ¸…ç©ºå·¥ä½œåŒº
+        // Çå¿Õ¹¤×÷Çø
         stage('Clean Workspace') {
             steps {
                 deleteDir()
                 echo 'Clean Seccuessfully!'
             }
         }
-        // ç­¾å‡ºé¡¹ç›®
+        // Ç©³öÏîÄ¿
         stage('Clone Project') {
             steps {
                 git credentialsId: 'fe569196-bb65-4f18-b7e8-c26587efff64', url: 'git@github.com:atuwujianhui/TMS-SERVICE.git'
                 echo 'Clone Seccuessfully!'
             }
         }
-        // æ„å»º
+        // ¹¹½¨
         stage('Build Project') {
             steps {
                 bat 'mvn clean package'
@@ -43,7 +43,7 @@ pipeline {
                 echo 'Build Seccuessfully!'
             }
         }
-        // éƒ¨ç½²
+        // ²¿Êğ
         stage('Deploy Project') {
             steps {
                 // sshPublisher(publishers: [sshPublisherDesc(configName: '192.168.31.169', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '''
@@ -53,19 +53,19 @@ pipeline {
                 //     nohup java -jar jar/tms.jar --server.port=8081 > nohup.log &
                 // ''', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: 'jar', remoteDirectorySDF: false, removePrefix: 'target/', sourceFiles: 'target/tms-0.0.1-SNAPSHOT.jar')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
                 sshPublisher(publishers: [sshPublisherDesc(configName: '192.168.31.169', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '''
-                    # å®šä¹‰å˜é‡
+                    # ¶¨Òå±äÁ¿
                     package_name="tms-0.0.1-SNAPSHOT.jar"
                     port="8081"
                     
-                    # å…³é—­æœåŠ¡ï¼ˆç›®å‰æ˜¯å…ˆä¸Šä¼ è¦†ç›–å®‰è£…åŒ…ï¼Œå†å…³é—­æœåŠ¡ï¼Œå°½é‡å…ˆå…³é—­æœåŠ¡ï¼Œå†ä¸Šä¼ ï¼‰
+                    # ¹Ø±Õ·şÎñ£¨Ä¿Ç°ÊÇÏÈÉÏ´«¸²¸Ç°²×°°ü£¬ÔÙ¹Ø±Õ·şÎñ£¬¾¡Á¿ÏÈ¹Ø±Õ·şÎñ£¬ÔÙÉÏ´«£©
                     pid=$(ps -ef | grep ${package_name} | grep -v grep | awk \'{print $2}\')
                     [ ${pid} ] && kill -9 ${pid}
                     
-                    # åˆå§‹åŒ–ç¯å¢ƒå˜é‡
+                    # ³õÊ¼»¯»·¾³±äÁ¿
                     source /etc/profile
                     cd jar
                     
-                    # å¯åŠ¨æœåŠ¡
+                    # Æô¶¯·şÎñ
                     nohup java -jar ${package_name} --server.port=${port} > nohup.out &
                 ''', execTimeout: 120000, flatten: false, makeEmptyDirs: false, noDefaultExcludes: false, patternSeparator: '[, ]+', remoteDirectory: 'jar', remoteDirectorySDF: false, removePrefix: 'target/', sourceFiles: 'target/tms-0.0.1-SNAPSHOT.jar')], usePromotionTimestamp: false, useWorkspaceInPromotion: false, verbose: false)])
                 echo 'Deploy Seccuessfully!'
@@ -82,20 +82,20 @@ pipeline {
         success {
             script {
                 println("Success!!!")
-                currentBuild.description = "æ„å»ºæˆåŠŸï¼"
+                currentBuild.description = "¹¹½¨³É¹¦£¡"
             }
         }
         failure {
             script {
-                currentBuild.description = "æ„å»ºå¤±è´¥ï¼"
+                currentBuild.description = "¹¹½¨Ê§°Ü£¡"
                 println("Failure!!!")
             }
             
         }
-        // æ”¾å¼ƒ
+        // ·ÅÆú
         aborted {
             script {
-                currentBuild.description = "æ„å»ºå–æ¶ˆï¼"
+                currentBuild.description = "¹¹½¨È¡Ïû£¡"
                 println("Aborted!!!")
             }
         }
