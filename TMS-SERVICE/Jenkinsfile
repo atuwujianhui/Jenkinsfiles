@@ -1,8 +1,19 @@
+
+// 引入引入共享库
+@Library('Jenkinslibs') _ 
+def tools = new org.devops.tools()  // 定义类对象（提示无法解析类 ，实际可以正常运行）
+
 pipeline {
     agent any
+    // agent {
+    //     node {
+    //         label "Master Atu"
+    //     }
+    // }
     
     options {
-        timeout(time: 1, unit: "HOURS")
+        timestamps() // 日志显示时间戳 
+        timeout(time: 1, unit: "HOURS") // 流水线超时设置
     }
     
     environment {
@@ -35,7 +46,6 @@ pipeline {
         // 部署
         stage('Deploy Project') {
             steps {
-                // 注意：Shell命令会在“Remote directory”目录下执行
                 // sshPublisher(publishers: [sshPublisherDesc(configName: '192.168.31.169', transfers: [sshTransfer(cleanRemote: false, excludes: '', execCommand: '''
                 //     # pid=$(ps -ef | grep ${package_name} | grep -v grep | awk \'{print $2}\')
                 //     # [ ${pid} ] && kill -9 ${pid}
@@ -46,7 +56,6 @@ pipeline {
                     # 定义变量
                     package_name="tms-0.0.1-SNAPSHOT.jar"
                     port="8081"
-					jar_path="/home/atu/jar"
                     
                     # 关闭服务（目前是先上传覆盖安装包，再关闭服务，尽量先关闭服务，再上传）
                     pid=$(ps -ef | grep ${package_name} | grep -v grep | awk \'{print $2}\')
@@ -54,7 +63,7 @@ pipeline {
                     
                     # 初始化环境变量
                     source /etc/profile
-                    cd ${jar_path}
+                    cd jar
                     
                     # 启动服务
                     nohup java -jar ${package_name} --server.port=${port} > nohup.out &
@@ -63,4 +72,33 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            script {
+                println("Hello, Always!")
+                tools.printMsg("******** Hello, Libs ********")
+            }
+        }
+        success {
+            script {
+                println("Success!!!")
+                currentBuild.description = "构建成功！"
+            }
+        }
+        failure {
+            script {
+                currentBuild.description = "构建失败！"
+                println("Failure!!!")
+            }
+            
+        }
+        // 放弃
+        aborted {
+            script {
+                currentBuild.description = "构建取消！"
+                println("Aborted!!!")
+            }
+        }
+    }
+    
 }
